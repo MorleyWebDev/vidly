@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Data.Entity;
 using System.Net.Http;
 using System.Web.Http;
 using vidly.Models;
@@ -20,9 +21,15 @@ namespace vidly.Controllers.Api
         }
 
         //GET /api/customers
-        public IEnumerable<CustomerDto> GetCustomers()
+        public IHttpActionResult GetCustomers()
         {
-            return _context.Customers.ToList().Select(Mapper.Map<Customer, CustomerDto>);
+            var customerDtos = _context.Customers
+                .Include(c => c.MembershipType)
+                .ToList()
+                .Select(Mapper.Map<Customer, CustomerDto>);
+
+            return Ok(customerDtos);
+
         }
 
         //GET /api/customers/int
@@ -86,10 +93,12 @@ namespace vidly.Controllers.Api
             var customerInDb = _context.Customers.SingleOrDefault(c => c.Id == id);
 
             if (customerInDb == null)
-                throw new HttpResponseException(HttpStatusCode.NotFound);
+                //throw new HttpResponseException(HttpStatusCode.NotFound);
+                return NotFound();
 
-            _context.Customers.Remove(customerInDb);
-            _context.SaveChanges();
+
+                _context.Customers.Remove(customerInDb);
+                _context.SaveChanges();
 
             return Ok();
             
